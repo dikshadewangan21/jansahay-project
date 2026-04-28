@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    @apply bg-pulse-bg text-pulse-text font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar        { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track  { background: #0e1117; }
+  ::-webkit-scrollbar-thumb  { background: #232b3e; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2e3a52; }
+}
+
+@layer components {
+  .card {
+    @apply bg-pulse-surface border border-pulse-border rounded-xl;
+  }
+
+  .btn-primary {
+    @apply bg-pulse-teal text-pulse-bg font-semibold px-4 py-2 rounded-lg
+           hover:brightness-110 active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed text-sm;
+  }
+
+  .btn-ghost {
+    @apply border border-pulse-border text-pulse-muted px-4 py-2 rounded-lg
+           hover:border-pulse-teal hover:text-pulse-teal active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed text-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Responsive container for page content */
+  .page-container {
+    @apply p-4 sm:p-6 max-w-screen-xl mx-auto;
+  }
+
+  /* Thin scrollbar for lists */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #232b3e #0e1117;
+  }
+}
+
+/* Animated pulse for critical items */
+@keyframes urgency-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.urgency-critical-dot {
+  animation: urgency-pulse 1.4s ease-in-out infinite;
+}
+
+/* ── Hindi / Devanagari font support ──────────────────────────────────────── */
+:lang(hi) {
+  font-family: 'Noto Sans Devanagari', 'Segoe UI', sans-serif;
+  line-height: 1.7;
+}
+.devanagari,
+[lang="hi"] * {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+/* ── Responsive chart overflow fix ───────────────────────────────────────── */
+.recharts-responsive-container {
+  min-width: 0 !important;
+}
+
+/* ── Mobile tap highlight removal ────────────────────────────────────────── */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Prevent horizontal overflow on all pages ────────────────────────────── */
+#root {
+  overflow-x: hidden;
+}
+
+/* Toast slide-in animation */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(1rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
