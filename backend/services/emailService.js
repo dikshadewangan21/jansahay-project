@@ -17,23 +17,26 @@ const logger     = require('../config/logger');
 
 // Build transporter once (null if SMTP not configured)
 function createTransporter() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const port = process.env.SMTP_PORT || process.env.EMAIL_PORT || '587';
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
 
-  if (!SMTP_HOST || !SMTP_USER) {
+  if (!host || !user || !pass) {
     logger.warn('Email service: SMTP not configured — notifications will be skipped.');
     return null;
   }
 
   return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: parseInt(SMTP_PORT || '587', 10),
-    secure: SMTP_PORT === '465',
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
+    host,
+    port: parseInt(port, 10),
+    secure: port === '465',
+    auth: { user, pass },
   });
 }
 
 const transporter  = createTransporter();
-const FROM_ADDRESS = process.env.SMTP_FROM || 'JanSahay <noreply@jansahay.in>';
+const FROM_ADDRESS = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'JanSahay <noreply@jansahay.in>';
 
 // Base email wrapper — silent failure, never throws
 async function send(to, subject, html) {
