@@ -19,7 +19,9 @@ const listTasks = asyncHandler(async (req, res) => {
   }
 
   const [tasks, total] = await Promise.all([
-    Task.find(filter).sort({ urgencyScore: -1, createdAt: -1 })
+    Task.find(filter)
+      .populate('assignedVolunteerId', 'name phone rating')
+      .sort({ urgencyScore: -1, createdAt: -1 })
       .skip(Number(offset)).limit(Number(limit)).lean({ virtuals: true }),
     Task.countDocuments(filter),
   ]);
@@ -133,8 +135,20 @@ const deleteTask = asyncHandler(async (req, res) => {
 function normalise(t) {
   const out = { ...t };
   if (!out.id && out._id) out.id = out._id.toString();
-  if (out.reportId)            out.reportId            = out.reportId?.toString() ?? null;
-  if (out.assignedVolunteerId) out.assignedVolunteerId = out.assignedVolunteerId?.toString() ?? null;
+  if (out.reportId) out.reportId = out.reportId?.toString() ?? null;
+
+  if (out.assignedVolunteerId && typeof out.assignedVolunteerId === 'object' && out.assignedVolunteerId.name) {
+    out.assignedVolunteer = {
+      id: out.assignedVolunteerId._id?.toString() || out.assignedVolunteerId.id,
+      name: out.assignedVolunteerId.name,
+      phone: out.assignedVolunteerId.phone,
+      rating: out.assignedVolunteerId.rating,
+    };
+    out.assignedVolunteerId = out.assignedVolunteer.id;
+  } else if (out.assignedVolunteerId) {
+    out.assignedVolunteerId = out.assignedVolunteerId?.toString() ?? null;
+  }
+
   delete out._id; delete out.__v;
   if (!out.urgencyLevel) out.urgencyLevel = urgencyLevel(out.urgencyScore);
   return out;

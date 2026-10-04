@@ -35,6 +35,28 @@ router.get('/analytics/summary', ctrl.getAnalytics);
 // ── Heatmap (before /:id) ─────────────────────────────────────────────────────
 router.get('/heatmap', ctrl.getHeatmapData);
 
+// ── POST /api/reports/ocr (scan paper survey or complaint sheet) ──────────────
+router.post(
+  '/ocr',
+  optionalAuth,
+  upload.single('document'),
+  async (req, res, next) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Please upload an image file of the paper survey or document.' });
+      }
+      const { processDocumentOcr } = require('../services/ocrService');
+      const result = await processDocumentOcr(req.file.path);
+      res.json({
+        ...result,
+        fileUrl: `/uploads/${req.file.filename}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ── GET /api/reports/:id ──────────────────────────────────────────────────────
 router.get(
   '/:id',

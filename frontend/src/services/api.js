@@ -87,6 +87,11 @@ export const reportsApi = {
   feedback: (id, payload) =>
     request(`/reports/${id}/feedback`, { method: 'POST', body: JSON.stringify(payload) }),
   classify: (id) => request(`/reports/${id}/classify`, { method: 'POST' }),
+  processOcr: (file) => {
+    const fd = new FormData();
+    fd.append('document', file);
+    return requestMultipart('/reports/ocr', fd);
+  },
 };
 
 // ── Volunteers ─────────────────────────────────────────────────────────────────

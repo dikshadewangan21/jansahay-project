@@ -47,7 +47,7 @@ function computeLiveSdgScores(tasks, reports, seedImpact) {
   const liveReach = {};
   for (const task of completedTasks) {
     const goals = SDG_CATEGORY_MAP[task.category] || [];
-    const report = reports.find((r) => r.id === task.reportId);
+    const report = reports.find((r) => (r.id || r._id)?.toString() === task.reportId?.toString());
     const affected = report?.affectedCount || 0;
 
     for (const goal of goals) {
@@ -65,13 +65,15 @@ function computeLiveSdgScores(tasks, reports, seedImpact) {
     const seedKey = `sdg-${goal}`;
     const seed = seedImpact[seedKey] || {};
     const livePeopleReached = liveReach[goal] || 0;
+    const additionalTasks = completedTasks.filter((t) => (SDG_CATEGORY_MAP[t.category] || []).includes(goal)).length;
 
     return {
       goal,
+      number: goal,
       label: SDG_LABELS[goal] || `SDG ${goal}`,
       score: seed.score ?? Math.round(40 + Math.random() * 30),
       trend: seed.trend ?? 0,
-      tasksLinked: seed.tasksLinked ?? 0,
+      tasksLinked: (seed.tasksLinked ?? 0) + additionalTasks,
       peopleReached: (seed.peopleReached || 0) + livePeopleReached,
     };
   });

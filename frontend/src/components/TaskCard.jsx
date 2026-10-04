@@ -103,10 +103,19 @@ export default function TaskCard({ task, onUpdate }) {
       )}
 
       {/* Assigned volunteer */}
-      {task.status === 'in-progress' && task.assignedVolunteerId && (
-        <div className="flex items-center gap-2 bg-pulse-tealDark/30 rounded-lg px-3 py-2 mb-3">
-          <User size={13} className="text-pulse-teal" />
-          <span className="text-xs text-pulse-teal font-medium">Volunteer assigned</span>
+      {task.status === 'in-progress' && (task.assignedVolunteer || task.assignedVolunteerId) && (
+        <div className="flex items-center justify-between bg-pulse-tealDark/30 rounded-lg px-3 py-2 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <User size={13} className="text-pulse-teal shrink-0" />
+            <span className="text-xs text-pulse-teal font-medium truncate">
+              {task.assignedVolunteer?.name ? `Assigned: ${task.assignedVolunteer.name}` : 'Volunteer assigned'}
+            </span>
+          </div>
+          {task.assignedVolunteer?.rating != null && (
+            <span className="text-[10px] text-pulse-medium shrink-0 ml-2">
+              ⭐ {task.assignedVolunteer.rating}
+            </span>
+          )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, AlertCircle, Loader2, Sparkles, Upload, X, Image, Mic } from 'lucide-react';
+import { Send, AlertCircle, Loader2, Sparkles, Upload, X, Image, Mic, FileText, Scan, Check } from 'lucide-react';
 import { reportsApi } from '../services/api';
 import { useToast } from '../components/ToastContext';
 import { useAuth  } from '../components/AuthContext';
@@ -57,7 +57,50 @@ export default function SubmitReportPage() {
   const [imageFiles, setImageFiles]   = useState([]);
   const [uploading, setUploading]     = useState(false);
   const [voiceTarget, setVoiceTarget] = useState(null);
-  const fileInputRef = useRef(null);
+  const [ocrLoading, setOcrLoading]   = useState(false);
+  const [ocrResult, setOcrResult]     = useState(null);
+  const fileInputRef                  = useRef(null);
+  const ocrInputRef                   = useRef(null);
+
+  async function handleOcrUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setOcrLoading(true);
+    setOcrResult(null);
+    try {
+      const res = await reportsApi.processOcr(file);
+      setOcrResult(res);
+      addToast(`Document scanned successfully via AI OCR (${res.confidence || 85}% confidence)`, 'success');
+      if (res.detected) {
+        applyOcrResult(res.detected);
+      }
+    } catch (err) {
+      addToast(`OCR Error: ${err.message}`, 'error');
+    } finally {
+      setOcrLoading(false);
+      if (ocrInputRef.current) ocrInputRef.current.value = '';
+    }
+  }
+
+  function applyOcrResult(detected) {
+    if (!detected) return;
+    setForm((f) => ({
+      ...f,
+      source: 'paper_survey',
+      category: detected.category || f.category,
+      title: detected.title || f.title,
+      description: detected.description || f.description,
+      affectedCount: detected.affectedCount ? String(detected.affectedCount) : f.affectedCount,
+      tags: detected.tags?.length ? detected.tags : f.tags,
+      location: detected.location ? {
+        lat: String(detected.location.lat),
+        lng: String(detected.location.lng),
+        ward: detected.location.ward,
+        area: detected.location.area,
+      } : f.location,
+    }));
+    addToast('Extracted survey details applied to form!', 'success');
+  }
 
   const SOURCES = [
     { value: 'web',          label: t('submit.sources.web') },
@@ -253,6 +296,101 @@ export default function SubmitReportPage() {
                 {t('submit.voice.capturedText', { field: voiceTarget })}
               </p>
               <p className="text-xs text-pulse-text line-clamp-3">{form[voiceTarget]}</p>
+            </div>
+          )}
+        </div>
+
+        {/* ── AI OCR Document & Paper Survey Scanner ── */}
+        <div className="card p-4 border border-pulse-blue/30 bg-blue-500/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Scan size={15} className="text-pulse-blue" />
+              <span className="text-xs font-semibold text-pulse-blue uppercase tracking-wider">
+                📄 AI Paper Survey & Document OCR Scanner
+              </span>
+            </div>
+            <span className="text-[10px] text-pulse-muted">Auto-entity extraction</span>
+          </div>
+          <p className="text-xs text-pulse-muted mb-3">
+            Have a paper survey sheet, handwritten complaint, or official notice? Upload the photo to extract text and auto-fill the complaint form instantly.
+          </p>
+
+          <input
+            ref={ocrInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleOcrUpload}
+          />
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => ocrInputRef.current?.click()}
+              disabled={ocrLoading || submitting}
+              className="btn-ghost border border-pulse-blue/40 text-pulse-blue hover:bg-pulse-blue/10 flex items-center gap-2 text-xs py-2 px-3"
+            >
+              {ocrLoading ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  <span>Processing document with AI OCR…</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={13} />
+                  <span>Upload / Scan Paper Survey (OCR)</span>
+                </>
+              )}
+            </button>
+
+            {ocrResult && (
+              <button
+                type="button"
+                onClick={() => applyOcrResult(ocrResult.detected)}
+                className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
+              >
+                <Check size={13} /> Re-apply Extracted Details
+              </button>
+            )}
+          </div>
+
+          {/* OCR Result summary card */}
+          {ocrResult && (
+            <div className="mt-3 p-3 bg-pulse-bg rounded-lg border border-pulse-border text-xs space-y-2">
+              <div className="flex items-center justify-between text-pulse-teal font-medium">
+                <span className="flex items-center gap-1">
+                  <Sparkles size={12} /> Detected: {ocrResult.detected?.category?.toUpperCase()} in {ocrResult.detected?.location?.area}
+                </span>
+                <span className="text-[10px] font-mono text-pulse-muted">
+                  Confidence: {ocrResult.confidence}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-pulse-muted pt-1">
+                <div>
+                  <span className="block text-[9px] uppercase">Category</span>
+                  <span className="text-pulse-text font-medium capitalize">{ocrResult.detected?.category}</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase">Ward / Area</span>
+                  <span className="text-pulse-text font-medium">{ocrResult.detected?.location?.ward} ({ocrResult.detected?.location?.area})</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase">Affected</span>
+                  <span className="text-pulse-text font-medium">{ocrResult.detected?.affectedCount} people</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase">Source</span>
+                  <span className="text-pulse-text font-medium">Paper Survey</span>
+                </div>
+              </div>
+              {ocrResult.rawText && (
+                <div className="pt-2 border-t border-pulse-border/50">
+                  <p className="text-[10px] text-pulse-muted uppercase mb-1">OCR Raw Text Snippet:</p>
+                  <p className="text-[11px] text-pulse-muted/80 font-mono bg-black/20 p-2 rounded max-h-24 overflow-y-auto leading-relaxed">
+                    {ocrResult.rawText}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

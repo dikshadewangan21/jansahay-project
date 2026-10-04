@@ -103,15 +103,23 @@ function autoDispatch(task, volunteers) {
 
   const missionId = `MISSION-${Date.now().toString(36).toUpperCase()}`;
 
+  const mappedAssigned = assigned.map((v) => ({
+    id: v.id,
+    name: v.name,
+    phone: v.phone,
+    skills: v.skills || v._skillMatch,
+    matchScore: v._matchScore,
+    distanceKm: v._distanceKm,
+    matchedSkills: v._skillMatch,
+  }));
+
   return {
     success: true,
     message: `Auto-dispatched ${assigned.length} volunteers for "${task.title}"`,
     missionId,
     missionTime: missionTime.toISOString(),
-    assigned: assigned.map((v) => ({
-      id: v.id, name: v.name, phone: v.phone,
-      matchScore: v._matchScore, distanceKm: v._distanceKm, matchedSkills: v._skillMatch,
-    })),
+    assigned: mappedAssigned,
+    assignedVolunteers: mappedAssigned,
     notifications,
     totalCandidates: candidates.length,
   };

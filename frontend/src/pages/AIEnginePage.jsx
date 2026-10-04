@@ -200,9 +200,10 @@ export default function AIEnginePage() {
       });
       const dispatch = await aiApi.dispatch(task.id);
       setDispatchResult(dispatch);
+      const assignedCount = (dispatch.assigned || dispatch.assignedVolunteers || []).length;
       addToast(
         dispatch.success
-          ? `✅ ${dispatch.assignedVolunteers?.length || 0} volunteer(s) dispatched!`
+          ? `✅ ${assignedCount} volunteer(s) dispatched!`
           : dispatch.message || 'Dispatch complete.',
         dispatch.success ? 'success' : 'warning',
       );
@@ -405,10 +406,10 @@ export default function AIEnginePage() {
               ) : (
                 <>
                   <p className="text-xs text-pulse-muted mb-3">
-                    {dispatchResult.assignedVolunteers?.length} volunteer(s) matched and notified.
+                    {(dispatchResult.assigned || dispatchResult.assignedVolunteers || []).length} volunteer(s) matched, dispatched and notified.
                   </p>
                   <div className="space-y-2">
-                    {(dispatchResult.assignedVolunteers || []).map((v, i) => (
+                    {(dispatchResult.assigned || dispatchResult.assignedVolunteers || []).map((v, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-pulse-border">
                         {/* Avatar */}
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pulse-teal/40 to-pulse-teal/10 flex items-center justify-center shrink-0">

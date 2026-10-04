@@ -52,7 +52,7 @@ export default function SDGPage() {
   if (loading) return <div className="flex items-center justify-center h-full p-6"><Spinner size={32} /></div>;
 
   const goals = data?.goals || [];
-  const radarData = goals.map((g) => ({ subject: `SDG ${g.number}`, score: g.score, fullMark: 100 }));
+  const radarData = goals.map((g) => ({ subject: `SDG ${g.number ?? g.goal}`, score: g.score, fullMark: 100 }));
   const overallScore = goals.length > 0 ? Math.round(goals.reduce((s, g) => s + g.score, 0) / goals.length) : 0;
 
   return (
@@ -98,20 +98,26 @@ export default function SDGPage() {
         <div className="card p-4">
           <p className="text-sm font-semibold text-pulse-text mb-4">{t('sdg.breakdown')}</p>
           <div className="space-y-3">
-            {goals.map((g) => (
-              <div key={g.number}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center text-white"
-                      style={{ background: SDG_COLORS[g.number] || '#888' }}>
-                      {g.number}
+            {goals.map((g) => {
+              const goalNum = g.number ?? g.goal;
+              return (
+                <div key={goalNum}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center text-white"
+                        style={{ background: SDG_COLORS[goalNum] || '#888' }}>
+                        {goalNum}
+                      </span>
+                      <p className="text-xs text-pulse-text truncate max-w-[180px]">{g.label}</p>
+                    </div>
+                    <span className="text-[10px] text-pulse-muted">
+                      {g.tasksLinked || 0} tasks · {(g.peopleReached || 0).toLocaleString()} reached
                     </span>
-                    <p className="text-xs text-pulse-text truncate max-w-[180px]">{g.label}</p>
                   </div>
+                  <ScoreBar value={g.score} />
                 </div>
-                <ScoreBar value={g.score} />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
